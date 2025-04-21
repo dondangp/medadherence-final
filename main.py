@@ -18,6 +18,29 @@ from schedule import every, run_pending
 
 med_notes_path = "app_data/medication_notes.json"
 
+
+def update_user_account(username, updated_info):
+    try:
+        with open("app_data/user_accounts.json", "r") as file:
+            users = json.load(file)
+
+        for user in users:
+            if user["username"] == username:
+                user.update({
+                    "first_name": updated_info.get("first_name", user["first_name"]),
+                    "last_name": updated_info.get("last_name", user["last_name"]),
+                    "email": updated_info.get("email", user.get("email", "")),
+                    "phone": updated_info.get("phone", user.get("phone", ""))
+                })
+
+        with open("app_data/user_accounts.json", "w") as file:
+            json.dump(users, file, indent=2)
+
+        return True
+    except Exception as e:
+        return False
+
+
 def load_medication_notes():
     try:
         with open(med_notes_path, "r") as f:
@@ -2773,6 +2796,7 @@ with medications:
 CONDITIONS_PATH = "fhir_data/condition/Condition.ndjson"
 IMMUNIZATION_PATH = "fhir_data/immunization/Immunization.ndjson"
 ALLERGIES_PATH = "fhir_data/allergy_intolerance/AllergyIntolerance.ndjson"
+
 with profile:
     # Maintain active tab in session state
     tab_labels = ["Personal Information", "Contact Information", "Conditions", "Immunizations", "Allergies"]
@@ -2801,6 +2825,9 @@ with profile:
             success, message = save_patient_data(updated_patient)
 
             if success:
+                # ✅ Also update user_accounts.json
+                update_user_account(st.session_state.username, st.session_state.editable_profile)
+
                 load_patient.clear()  # Clear cache
                 st.session_state.current_patient = load_patient(updated_patient["id"])
                 st.success("✅ Patient FHIR resource updated successfully.")
@@ -3147,7 +3174,7 @@ This is a test email from the Medication Tracker app.
 {med_list}
 
 To update your checklist, visit:
-http://localhost:8501/
+https://medication-adherence-tracker.streamlit.app/
 
 ✅ If you received this, your email system is working!
 
