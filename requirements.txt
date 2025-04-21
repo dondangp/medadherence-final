@@ -1,0 +1,9 @@
+streamlit
+plotly
+pandas
+python-dotenv
+reportlab
+schedule
+streamlit-cookies-manager
+numpy
+openai==0.28

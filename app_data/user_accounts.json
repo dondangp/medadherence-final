@@ -1,0 +1,17 @@
+[
+    {
+      "username": "tarunta",
+      "password": "password123",
+      "first_name": "Tarun",
+      "last_name": "TA",
+      "patient_id": "42ed5c35-3c36-136a-1179-7af73df61d8c"
+    },
+    {
+      "username": "ramon",
+      "password": "test",
+      "first_name": "Ramon",
+      "last_name": "Zubiate",
+      "patient_id": "" 
+    }
+  ]
+  
