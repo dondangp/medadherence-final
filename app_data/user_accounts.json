@@ -1,17 +1,25 @@
 [
-    {
-      "username": "tarunta",
-      "password": "password123",
-      "first_name": "Tarun",
-      "last_name": "TA",
-      "patient_id": "42ed5c35-3c36-136a-1179-7af73df61d8c"
-    },
-    {
-      "username": "ramon",
-      "password": "test",
-      "first_name": "Ramon",
-      "last_name": "Zubiate",
-      "patient_id": "" 
-    }
-  ]
-  
+  {
+    "username": "tarunta",
+    "password": "password123",
+    "first_name": "Tarun",
+    "last_name": "TA",
+    "patient_id": "42ed5c35-3c36-136a-1179-7af73df61d8c",
+    "email": "toprekt420@gamil.com",
+    "phone": "8173054222",
+    "address": "516 Flintwood Ln",
+    "birth_date": "07/16/2003",
+    "gender": "Male",
+    "race": "Asian",
+    "ethnicity": "Asian",
+    "language": "English",
+    "religion": "Catholic"
+  },
+  {
+    "username": "ramon",
+    "password": "test",
+    "first_name": "Ramon",
+    "last_name": "Zubiate",
+    "patient_id": ""
+  }
+]
