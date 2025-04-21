@@ -26,11 +26,19 @@ def update_user_account(username, updated_info):
 
         for user in users:
             if user["username"] == username:
+                # Update all supported fields
                 user.update({
-                    "first_name": updated_info.get("first_name", user["first_name"]),
-                    "last_name": updated_info.get("last_name", user["last_name"]),
+                    "first_name": updated_info.get("first_name", user.get("first_name", "")),
+                    "last_name": updated_info.get("last_name", user.get("last_name", "")),
                     "email": updated_info.get("email", user.get("email", "")),
-                    "phone": updated_info.get("phone", user.get("phone", ""))
+                    "phone": updated_info.get("phone", user.get("phone", "")),
+                    "address": updated_info.get("address", user.get("address", "")),
+                    "birth_date": updated_info.get("birth_date", user.get("birth_date", "")),
+                    "gender": updated_info.get("gender", user.get("gender", "")),
+                    "race": updated_info.get("race", user.get("race", "")),
+                    "ethnicity": updated_info.get("ethnicity", user.get("ethnicity", "")),
+                    "language": updated_info.get("language", user.get("language", "")),
+                    "religion": updated_info.get("religion", user.get("religion", "")),
                 })
 
         with open("app_data/user_accounts.json", "w") as file:
@@ -38,7 +46,9 @@ def update_user_account(username, updated_info):
 
         return True
     except Exception as e:
+        print(f"❌ Error updating user_accounts.json: {e}")
         return False
+
 
 
 def load_medication_notes():
