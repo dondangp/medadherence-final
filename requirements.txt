@@ -7,3 +7,4 @@ schedule
 streamlit-cookies-manager
 numpy
 openai==0.28
+pytz
