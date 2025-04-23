@@ -16,6 +16,16 @@ from email.message import EmailMessage
 import json
 from schedule import every, run_pending
 
+def save_ndjson_data(file_path, data_list):
+        try:
+            with open(file_path, "w") as f:
+                for entry in data_list:
+                    f.write(json.dumps(entry) + "\n")
+            return True
+        except Exception as e:
+            print(f"❌ Failed to save to {file_path}: {e}")
+            return False
+
 med_notes_path = "app_data/medication_notes.json"
 
 
@@ -2876,9 +2886,11 @@ with profile:
         st.text_input("Email", value=st.session_state.editable_profile.get("email", ""), key="editable_profile_email")
         st.text_input("Phone Number", value=st.session_state.editable_profile.get("phone", ""), key="editable_profile_phone")
 
+
     # Conditions
     with tabs[2]:
         st.session_state.active_profile_tab = tab_labels[2]
+
         def load_conditions():
             try:
                 with open(CONDITIONS_PATH, "r") as f:
@@ -2889,28 +2901,50 @@ with profile:
 
         conditions = load_conditions()
         if conditions:
-            for condition in conditions:
-                with st.container():
-                    st.markdown(
-                        """
-                        <div style="border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; border-radius: 5px;">
-                            <h4 style="margin: 0;"> {}</h4>
-                            <p><strong>Status:</strong> {}</p>
-                            <p><strong>Onset Date:</strong> {}</p>
-                        </div>
-                        """.format(
-                            condition["code"]["text"],
-                            condition['clinicalStatus']['coding'][0]['display'],
-                            condition.get('onsetDateTime', 'Unknown')
-                        ),
-                        unsafe_allow_html=True
+            for idx, condition in enumerate(conditions):
+                with st.expander(f"Condition {idx + 1}"):
+                    condition["code"]["text"] = st.text_input("Condition Name", condition["code"].get("text", ""), key=f"cond_text_{idx}")
+
+                    status_map = {
+                        "active": "Active",
+                        "recurrence": "Recurrence",
+                        "inactive": "Inactive",
+                        "remission": "Remission",
+                        "resolved": "Resolved"
+                    }
+                    status_keys = list(status_map.keys())
+                    current_code = condition["clinicalStatus"]["coding"][0].get("code", "active")
+                    current_index = status_keys.index(current_code) if current_code in status_keys else 0
+
+                    selected_display = st.selectbox(
+                        "Clinical Status",
+                        list(status_map.values()),
+                        index=current_index,
+                        key=f"cond_status_{idx}"
                     )
+
+                    # Update both code and display
+                    selected_code = [k for k, v in status_map.items() if v == selected_display][0]
+                    condition["clinicalStatus"]["coding"][0]["code"] = selected_code
+                    condition["clinicalStatus"]["coding"][0]["display"] = selected_display
+
+                    condition["onsetDateTime"] = st.date_input(
+                        "Onset Date",
+                        value=pd.to_datetime(condition.get("onsetDateTime", date.today())),
+                        key=f"cond_date_{idx}"
+                    ).isoformat()
+
+            if st.button("💾 Save Conditions"):
+                if save_ndjson_data(CONDITIONS_PATH, conditions):
+                    st.success("✅ Conditions updated successfully.")
+                else:
+                    st.error("❌ Failed to save conditions.")
         else:
             st.write("No conditions available.")
 
-    # Immunizations
     with tabs[3]:
         st.session_state.active_profile_tab = tab_labels[3]
+
         def load_immunizations():
             try:
                 with open(IMMUNIZATION_PATH, "r") as f:
@@ -2921,28 +2955,41 @@ with profile:
 
         immunizations = load_immunizations()
         if immunizations:
-            for immunization in immunizations:
-                with st.container():
-                    st.markdown(
-                        """
-                        <div style="border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; border-radius: 5px;">
-                            <h4 style="margin: 0;"> {}</h4>
-                            <p><strong>Date:</strong> {}</p>
-                            <p><strong>Location:</strong> {}</p>
-                        </div>
-                        """.format(
-                            immunization["vaccineCode"]["text"],
-                            immunization.get('occurrenceDateTime', 'Unknown'),
-                            immunization.get('location', {}).get('display', 'Unknown')
-                        ),
-                        unsafe_allow_html=True
-                    )
+            for idx, immunization in enumerate(immunizations):
+                with st.expander(f"Immunization {idx + 1}"):
+                    vaccine_code = immunization.get("vaccineCode", {}).get("coding", [{}])[0]
+                    vaccine_display = vaccine_code.get("display", "")
+                    vaccine_code_val = vaccine_code.get("code", "")
+
+                    immunization["vaccineCode"]["text"] = st.text_input("Vaccine Text Label", immunization["vaccineCode"].get("text", ""), key=f"imm_text_{idx}")
+                    vaccine_display_new = st.text_input("Vaccine Display", vaccine_display, key=f"imm_disp_{idx}")
+                    vaccine_code_new = st.text_input("Vaccine Code", vaccine_code_val, key=f"imm_code_{idx}")
+
+                    immunization["vaccineCode"]["coding"][0]["display"] = vaccine_display_new
+                    immunization["vaccineCode"]["coding"][0]["code"] = vaccine_code_new
+
+                    immunization["occurrenceDateTime"] = st.date_input(
+                        "Date",
+                        value=pd.to_datetime(immunization.get("occurrenceDateTime", date.today())),
+                        key=f"imm_date_{idx}"
+                    ).isoformat()
+
+                    immunization["location"] = immunization.get("location", {})
+                    immunization["location"]["display"] = st.text_input("Location", immunization["location"].get("display", ""), key=f"imm_loc_{idx}")
+
+            if st.button("💾 Save Immunizations"):
+                if save_ndjson_data(IMMUNIZATION_PATH, immunizations):
+                    st.success("✅ Immunizations updated successfully.")
+                else:
+                    st.error("❌ Failed to save immunizations.")
         else:
             st.write("No immunizations available.")
+
 
     # Allergies
     with tabs[4]:
         st.session_state.active_profile_tab = tab_labels[4]
+
         def load_allergies():
             try:
                 with open(ALLERGIES_PATH, "r") as f:
@@ -2953,24 +3000,45 @@ with profile:
 
         allergies = load_allergies()
         if allergies:
-            for allergy in allergies:
-                with st.container():
-                    st.markdown(
-                        """
-                        <div style="border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; border-radius: 5px;">
-                            <h4 style="margin: 0;"> {}</h4>
-                            <p><strong>Category:</strong> {}</p>
-                            <p><strong>Reaction:</strong> {}</p>
-                        </div> 
-                        """.format(
-                            allergy["code"]["text"],
-                            ", ".join(allergy.get("category", ["Unknown"])),
-                            allergy.get("reaction", [{"text": "Unknown"}])[0].get("text", "Unknown")
-                        ),
-                        unsafe_allow_html=True
+            for idx, allergy in enumerate(allergies):
+                with st.expander(f"Allergy {idx + 1}"):
+                    allergy_code = allergy.get("code", {}).get("coding", [{}])[0]
+                    allergy_display = allergy_code.get("display", "")
+                    allergy_code_val = allergy_code.get("code", "")
+
+                    # Allergen name and display
+                    allergen_text = st.text_input("Allergen Label", allergy.get("code", {}).get("text", ""), key=f"alg_text_{idx}")
+                    allergen_display = st.text_input("Allergen Display", allergy_display, key=f"alg_disp_{idx}")
+                    allergen_code = st.text_input("Allergen Code", allergy_code_val, key=f"alg_code_{idx}")
+
+                    allergy["code"]["text"] = allergen_text
+                    allergy["code"]["coding"][0]["display"] = allergen_display
+                    allergy["code"]["coding"][0]["code"] = allergen_code
+
+                    # Category (multiselect)
+                    allergy["category"] = st.multiselect(
+                        "Category",
+                        ["food", "medication", "environment", "biologic"],
+                        default=allergy.get("category", ["Unknown"]),
+                        key=f"alg_cat_{idx}"
                     )
+
+                    # Reaction text
+                    reactions = allergy.get("reaction", [])
+                    if reactions:
+                        reactions[0]["text"] = st.text_input("Reaction", reactions[0].get("text", "Unknown"), key=f"alg_react_{idx}")
+                    else:
+                        allergy["reaction"] = [{"text": st.text_input("Reaction", "Unknown", key=f"alg_react_{idx}")}]
+
+            if st.button("💾 Save Allergies"):
+                if save_ndjson_data(ALLERGIES_PATH, allergies):
+                    st.success("✅ Allergies updated successfully.")
+                else:
+                    st.error("❌ Failed to save allergies.")
         else:
             st.write("No allergies available.")
+
+
 
 # Footer
 st.markdown("""<hr style="margin-top: 3rem;">
