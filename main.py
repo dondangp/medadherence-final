@@ -15,6 +15,9 @@ import smtplib
 from email.message import EmailMessage
 import json
 from schedule import every, run_pending
+import pytz
+
+eastern = pytz.timezone("US/Eastern")
 
 def save_ndjson_data(file_path, data_list):
         try:
@@ -1616,8 +1619,10 @@ with home:
     """, unsafe_allow_html=True)
     
     # Header section with greeting and time
-    current_time = datetime.now().strftime("%I:%M %p")
-    current_date = datetime.now().strftime("%A, %B %d, %Y")
+    now = datetime.now(eastern)
+    current_time = now.strftime("%I:%M %p")
+    current_date = now.strftime("%A, %B %d, %Y")
+
     
     st.markdown(f"""
     <div class="dashboard-header">
